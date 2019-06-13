@@ -1,0 +1,34 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/rabbit
+       http://www.springframework.org/schema/rabbit/spring-rabbit-1.7.xsd
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-4.3.xsd">
+    <!-- 定义连接工厂 -->
+    <rabbit:connection-factory id="connectionFactory" host="127.0.0.1" port="5672"
+                               username="test" password="test" virtual-host="/test"/> <!-- !!4.将MQ注入工厂 -->
+    <!-- 定义模板
+        第三个参数，决定消息发送到哪里，如果为exchange，则发送到交换机;如果为queue，则发送到队列 -->
+    <rabbit:template id="template" connection-factory="connectionFactory" exchange="fanoutExchange"/>
+    <rabbit:admin connection-factory="connectionFactory"/> <!-- !!1.定义模板 -->
+    <!-- 定义队列 -->
+    <rabbit:queue name="myQueue" auto-declare="true"/> <!-- !!1.定义队列 --><!-- !!2.将队列绑定到交换机 -->
+    <!-- 定义交换机 -->
+    <rabbit:fanout-exchange name="fanoutExchange" auto-declare="true"> <!-- !!3.将交换机注入到MQ -->
+        <!-- 将消息绑定到交换机 -->
+        <rabbit:bindings>
+            <rabbit:binding queue="myQueue">
+
+            </rabbit:binding>
+        </rabbit:bindings>
+    </rabbit:fanout-exchange>
+    <!-- 定义监听器，收到消息会执行 -->
+    <rabbit:listener-container connection-factory="connectionFactory">
+        <!-- 定义监听的类和方法 -->
+        <rabbit:listener ref="consumer" method="test" queue-names="myQueue"/> <!-- !!5.监听消费者，有消息就消费 -->
+    </rabbit:listener-container>
+    <!-- 定义消费者 -->
+    <bean id="consumer" class="com.ytbdmhy.spring.MyConsumer"/> <!-- !!1.定义消费者 -->
+
+</beans>
